@@ -8,11 +8,24 @@ impl Employee {
     fn is_legal(&self) -> bool {
         self.age >= 18
     }
+
+    fn scream_name(&mut self) -> Self {
+        Self {
+            name: self.name.to_uppercase(),
+            age: self.age,
+        }
+    }
 }
 
 enum Order {
     Ascending,
     Descending,
+    Unordered,
+}
+
+enum NameCaseType {
+    Screaming,
+    Sentence,
 }
 
 fn setup_employees() -> Vec<Employee> {
@@ -46,9 +59,7 @@ fn setup_employees() -> Vec<Employee> {
     ]
 }
 
-fn find_legal_employees(order: Order) -> Vec<Employee> {
-    let mut employees = setup_employees();
-
+fn sort_employees(order: Order, employees: &mut Vec<Employee>) {
     match order {
         Order::Ascending => {
             employees.sort_by(|a, b| a.name.cmp(&b.name));
@@ -56,14 +67,25 @@ fn find_legal_employees(order: Order) -> Vec<Employee> {
         Order::Descending => {
             employees.sort_by(|a, b| b.name.cmp(&a.name));
         }
-    };
+        _ => (),
+    }
+}
+
+fn find_legal_employees(order: Order, name_case_type: NameCaseType) -> Vec<Employee> {
+    let mut employees = setup_employees();
+
+    sort_employees(order, &mut employees);
 
     employees
         .iter_mut()
         .filter(|employee| employee.is_legal())
-        .map(|employee| {
-            employee.name = employee.name.to_uppercase();
-            return employee.to_owned();
+        .map(|employee| match name_case_type {
+            NameCaseType::Screaming => {
+                return employee.scream_name();
+            }
+            NameCaseType::Sentence => {
+                return employee.clone();
+            }
         })
         .collect::<Vec<Employee>>()
 }
@@ -87,15 +109,9 @@ mod tests {
             age: 29,
         };
 
-        let expected = vec![employee_five, employee_four, employee_two]
-            .iter_mut()
-            .map(|employee| {
-                employee.name = employee.name.to_uppercase();
-                employee.clone()
-            })
-            .collect::<Vec<Employee>>();
+        let expected = vec![employee_two, employee_four, employee_five];
 
-        let actual = find_legal_employees(Order::Ascending);
+        let actual = find_legal_employees(Order::Unordered, NameCaseType::Sentence);
         assert_eq!(expected, actual);
     }
 
@@ -115,14 +131,8 @@ mod tests {
             age: 18,
         };
 
-        let expected = vec![employee_five, employee_four, employee_two]
-            .iter_mut()
-            .map(|employee| {
-                employee.name = employee.name.to_uppercase();
-                employee.clone()
-            })
-            .collect::<Vec<Employee>>();
-        let actual = find_legal_employees(Order::Ascending);
+        let expected = vec![employee_five, employee_four, employee_two];
+        let actual = find_legal_employees(Order::Ascending, NameCaseType::Sentence);
 
         assert_eq!(actual, expected);
     }
@@ -144,7 +154,7 @@ mod tests {
         };
 
         let expected = vec![employee_five, employee_four, employee_two];
-        let actual = find_legal_employees(Order::Ascending);
+        let actual = find_legal_employees(Order::Ascending, NameCaseType::Screaming);
 
         assert_eq!(actual, expected);
     }
@@ -152,21 +162,21 @@ mod tests {
     #[test]
     fn can_order_descending() {
         let employee_five = Employee {
-            name: "JOHN".to_owned(),
+            name: "John".to_owned(),
             age: 29,
         };
 
         let employee_four = Employee {
-            name: "MIKE".to_owned(),
+            name: "Mike".to_owned(),
             age: 51,
         };
         let employee_two = Employee {
-            name: "SEPP".to_owned(),
+            name: "Sepp".to_owned(),
             age: 18,
         };
 
         let expected = vec![employee_two, employee_four, employee_five];
-        let actual = find_legal_employees(Order::Descending);
+        let actual = find_legal_employees(Order::Descending, NameCaseType::Sentence);
 
         assert_eq!(actual, expected);
     }
